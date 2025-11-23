@@ -1,15 +1,13 @@
 import chromadb
-from email_reader import unread_email_fetcher
 from chromadb.config import Settings
-import os
 
-chroma_client=chromadb.Client(Settings(persitst_db="email_rag_db"))
+chroma_client=chromadb.Client(Settings(persist_directory="email_rag_db"))
 collection=chroma_client.get_or_create_collection("emails")
 
 def store_emails_in_vector_db(emails):
     for i,mail in enumerate(emails):
         collection.add(
-            documents=[f"Subject: {mail['subject']}\nBody: {mail['body']}\nBody: {mail['body']}"],
+            documents=[f"Subject: {mail['Subject']}\nFrom: {mail['Sender']}\nBody: {mail['Body']}"],
             metadatas=[{"sender":mail["Sender"],"subject":mail["Subject"]}],
             ids=[f"email_{i}"]
         )
