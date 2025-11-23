@@ -26,4 +26,18 @@ def generte_response(email_data):
     context = result.text if result else "No related past emails."
     
     model=genai.GenerativeModel("gemini-1.5-flash")
+    final_prompt=""""
+        You are an email assistant.
+        ### Past Email Context:
+        {context}
+        
+        ### Past Details:
+        {query}
+      
+        Write the reply in proper email format.
+        Ensure the tone is polite, concise, and professional.
+        Do NOT mention that you are an AI.
+        """
     
+    response=model.generate_content(final_prompt)
+    return response.text.strip(),"not_spam"
