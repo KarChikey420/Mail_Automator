@@ -50,4 +50,11 @@ def process_emails():
     except Exception as e:
         return jsonify({"error":str(e)}),500
 
-@app.route('/send_test_email',methods=["POST"])
+@app.route('/get-emails',methods=["GET"])
+def get_emails():
+    try:
+        emails=unread_email_fetcher()
+        return jsonify({"emails":emails}),200
+    except Exception as e:
+        return jsonify({"error":str(e)}),500
+    
