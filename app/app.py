@@ -33,7 +33,7 @@ def process_emails():
             reply_text,status=generte_response(email_data)
             response.append({
                 "to_email":email_data['Sender'],
-                "subject":f"Re:{email_data["Subject"]}",
+                "subject": f"Re:{email_data['Subject']}",
                 "reply":reply_text
             })
             
