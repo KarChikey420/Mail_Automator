@@ -30,26 +30,25 @@ def process_emails():
                 continue
             
             non_spam_emails.append(email_data)
-            reply_text,status=generte_response(email_data)
-            response.append({
-                "to_email":email_data['Sender'],
-                "subject": f"Re:{email_data['Subject']}",
-                "reply":reply_text
-            })
-            
-            response.append({
-                "email":email_data["Subject"],
-                "sender":email_data["Sender"],
-                "status":"reply sent" if status else "reply failed",
-                "reply":reply_text
-            })
-            
+        
         if non_spam_emails:
             store_emails_in_vector_db(non_spam_emails)
+    
+        for email_data in non_spam_emails:
+            reply_text,_ =generte_response(email_data)
+            subject=f"Re: {email_data['Subject']}"
+            send_status=send_email(email_data['Sender'],subject,reply_text)
+            
+            response.append({
+                "email":email_data['Subject'],
+                "sender":email_data['Sender'],
+                "status":"Reply Sent" if send_status else "reply Failed",
+                "reply":reply_text
+            })
         return jsonify({"processed_emails":response}),200
     except Exception as e:
         return jsonify({"error":str(e)}),500
-
+    
 @app.route('/get-emails',methods=["GET"])
 def get_emails():
     try:
