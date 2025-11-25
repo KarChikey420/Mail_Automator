@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Email Assistant</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Custom simpler font settings */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-8">
+
+    <div class="max-w-5xl mx-auto">
+        
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900">AI Email Assistant</h1>
+            <p class="text-slate-500 mt-1">Automated email processing with spam detection and intelligent replies</p>
+        </div>
+
+        <div class="border-b border-slate-200 mb-8 flex gap-8">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="pb-3 px-1 text-sm font-medium text-blue-600 border-b-2 border-blue-600 transition-colors">
+                Dashboard
+            </button>
+            <button onclick="switchTab('emails')" id="tab-emails" class="pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors">
+                All Emails
+            </button>
+        </div>
+
+        <div id="view-dashboard">
+            <button onclick="processEmails()" id="btn-process" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 shadow-md transition-all mb-8">
+                <i data-lucide="send" class="w-5 h-5"></i>
+                <span>Process Unread Emails</span>
+            </button>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 min-h-[300px] p-8">
+                
+                <div id="state-empty" class="flex flex-col items-center justify-center h-64 text-center">
+                    <div class="bg-slate-100 p-4 rounded-full mb-4">
+                        <i data-lucide="mail" class="w-12 h-12 text-slate-300"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-slate-900 mb-1">No Emails Processed Yet</h3>
+                    <p class="text-slate-500">Click "Process Unread Emails" to start processing your inbox</p>
+                </div>
+
+                <div id="state-loading" class="hidden flex flex-col items-center justify-center h-64 text-center animate-pulse">
+                    <div class="h-12 w-12 bg-slate-200 rounded-full mb-4"></div>
+                    <div class="h-4 w-48 bg-slate-200 rounded mb-2"></div>
+                    <div class="h-4 w-64 bg-slate-200 rounded"></div>
+                    <p class="mt-4 text-slate-400">Talking to AI...</p>
+                </div>
+
+                <div id="state-error" class="hidden bg-red-50 text-red-600 p-4 rounded-lg border border-red-100 text-center">
+                    <p id="error-msg">Something went wrong.</p>
+                </div>
+
+                <div id="state-results" class="hidden space-y-4">
+                    <h3 class="text-lg font-semibold mb-4">Processed Results</h3>
+                    <div id="results-container">
+                        </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="view-emails" class="hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center text-slate-500">
+                Raw email list view coming soon...
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- Functions ---
+
+        function switchTab(tabName) {
+            // Hide all views
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-emails').classList.add('hidden');
+            
+            // Reset Tab Styles
+            document.getElementById('tab-dashboard').className = "pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors";
+            document.getElementById('tab-emails').className = "pb-3 px-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors";
+
+            // Show selected view and highlight tab
+            if(tabName === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('tab-dashboard').className = "pb-3 px-1 text-sm font-medium text-blue-600 border-b-2 border-blue-600 transition-colors";
+            } else {
+                document.getElementById('view-emails').classList.remove('hidden');
+                document.getElementById('tab-emails').className = "pb-3 px-1 text-sm font-medium text-blue-600 border-b-2 border-blue-600 transition-colors";
+            }
+        }
+
+        async function processEmails() {
+            const btn = document.getElementById('btn-process');
+            const emptyState = document.getElementById('state-empty');
+            const loadingState = document.getElementById('state-loading');
+            const resultsState = document.getElementById('state-results');
+            const errorState = document.getElementById('state-error');
+            const resultsContainer = document.getElementById('results-container');
+
+            // 1. Set UI to Loading
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>Processing...</span>`;
+            lucide.createIcons(); // Re-render icons for the spinner
+
+            emptyState.classList.add('hidden');
+            resultsState.classList.add('hidden');
+            errorState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+
+            try {
+                // 2. Call the Backend
+                const response = await fetch('http://127.0.0.1:5000/process_emails');
+                const data = await response.json();
+
+                // 3. Handle Data
+                loadingState.classList.add('hidden');
+                resultsState.classList.remove('hidden');
+                resultsContainer.innerHTML = ''; // Clear previous results
+
+                const emails = data.processed_emails || [];
+
+                if (emails.length === 0) {
+                    resultsContainer.innerHTML = `<p class="text-center text-slate-500">No new emails found to process.</p>`;
+                } else {
+                    emails.forEach(email => {
+                        const statusColor = email.status === 'Spam' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+                        
+                        const html = `
+                        <div class="border border-slate-100 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-medium text-slate-900">${email.email}</h4>
+                                    <p class="text-sm text-slate-500">${email.sender}</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium ${statusColor}">
+                                    ${email.status}
+                                </span>
+                            </div>
+                            ${email.reply ? `
+                            <div class="mt-3 bg-slate-50 p-3 rounded text-sm text-slate-600 border border-slate-100">
+                                <strong>Auto-Reply:</strong> ${email.reply}
+                            </div>` : ''}
+                        </div>
+                        `;
+                        resultsContainer.insertAdjacentHTML('beforeend', html);
+                    });
+                }
+
+            } catch (err) {
+                console.error(err);
+                loadingState.classList.add('hidden');
+                errorState.classList.remove('hidden');
+                document.getElementById('error-msg').textContent = "Error: Could not connect to backend. Is Flask running?";
+            } finally {
+                // 4. Reset Button
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i> <span>Process Unread Emails</span>`;
+                lucide.createIcons();
+            }
+        }
+    </script>
+</body>
+</html>
