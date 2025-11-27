@@ -37,7 +37,13 @@ def unread_email_fetcher():
         email_list = []
         for num in search_data[0].split():
             result, uid_data = mail.fetch(num, "(UID)")
-            uid = uid_data[0].decode().split("UID")[1].split("]")[0].strip()
+            decoded_uid = uid_data[0].decode()
+
+
+            import re
+            uid_match = re.search(r'UID (\d+)', decoded_uid)
+            uid = uid_match.group(1) if uid_match else None
+
 
             _, data = mail.fetch(num, "(RFC822)")
             msg = email.message_from_bytes(data[0][1])

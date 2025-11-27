@@ -42,6 +42,7 @@ def process_single_email():
     try:
         email_index = request.json.get("index")
         email_uid = request.json.get("uid")
+        print(f"Processing email at index: {email_index} with UID: {email_uid}")
 
         if email_index is None:
             return jsonify({"error": "Email index not provided"}), 400
@@ -65,7 +66,7 @@ def process_single_email():
             mail.login(os.getenv("GMAIL_NAME"), os.getenv("GMAIL_PASSWORD"))
             mail.select("INBOX")
             if email_uid:
-                mail.store(email_uid, "+FLAGS", "\\Seen")
+                mail.uid('STORE', email_uid, '+FLAGS', '(\\Seen)')
                 print(f"Marked email UID {email_uid} as seen")
             mail.logout()
         except Exception as mark_error:
@@ -80,10 +81,6 @@ def process_single_email():
 
     except Exception as e:
         return jsonify({"error": f"Processing failed: {str(e)}"}), 500
-
-@app.route('/get-emails', methods=["GET"])
-def get_emails():
-    return jsonify({"emails": unread_email_fetcher()}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
