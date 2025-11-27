@@ -8,7 +8,7 @@ load_dotenv()
 
 def send_email(to_email, subject, body):
     try:
-        gmail_user = os.getenv("GMAIL_USER")
+        gmail_user = os.getenv("GMAIL_NAME")
         gmail_password = os.getenv("GMAIL_PASSWORD")
 
         if not gmail_user or not gmail_password:

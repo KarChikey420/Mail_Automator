@@ -18,7 +18,7 @@ def decode_header_value(value):
 
 def unread_email_fetcher():
     try:
-        gmail_user = os.getenv("GMAIL_USER")
+        gmail_user = os.getenv("GMAIL_NAME")
         gmail_password = os.getenv("GMAIL_PASSWORD")
 
         if not gmail_user or not gmail_password:
